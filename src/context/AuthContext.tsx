@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useReducer } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import cafeApi from "../api/cafeApi";
-import { Usuario, LoginResponse, LoginData } from '../interfaces/appInterfaces';
+import { Usuario, LoginResponse, LoginData, RegisterData } from '../interfaces/appInterfaces';
 import { authReducer, AuthState } from './authReducer';
 
 type AuthContexProps = {
@@ -9,7 +9,7 @@ type AuthContexProps = {
     token: string | null;
     user: Usuario | null;
     status: 'checking' | 'authenticaded' | 'not authenticaded';
-    signUp: () => void;
+    signUp: ( registerData: RegisterData ) => void;
     signIn: (loginData: LoginData) => void;
     logOut: () => void;
     removeError: () => void;
@@ -71,7 +71,7 @@ export const AuthProvider = ({children }: any ) => {
 
         await AsyncStorage.setItem('token', data.token );
 
-    } catch (error) {
+    } catch (error: any) {
         console.log(error.response.data.msg);
         dispatch({
             type: 'addError', 
@@ -81,11 +81,31 @@ export const AuthProvider = ({children }: any ) => {
 
    }
 
-   const signUp = () => {
+   const signUp = async( {nombre, correo, password } :RegisterData ) => {
+    try {
+        
+        const { data } = await cafeApi.post<LoginResponse>('/usuarios', { correo, password, nombre } )
+        dispatch({
+            type: 'signUp',
+            payload: {
+                token: data.token,
+                user: data.usuario,
+            }
+        });
 
+        await AsyncStorage.setItem('token', data.token );
+
+    } catch (error: any) {
+        console.log(error.response.data.msg);
+        dispatch({
+            type: 'addError', 
+            payload: error.response.data.errors[0].msg || 'Revise la información ',
+         } )
+    }
    }
-   const logOut = () => {
-
+   const logOut = async () => {
+    await AsyncStorage.removeItem('token');
+    dispatch({type: 'logout' });
    } 
    const removeError = () => {
     dispatch({type: 'removeError'  });
