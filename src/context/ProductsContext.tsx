@@ -37,12 +37,13 @@ export const ProductsProvider = ({ children }: any) => {
     const updateProduct = async (categoryId: string, productName: string, productId: string) => {
 
     };
+
     const loadProductById = async(id: string): Promise<Producto> => {
         const resp = await cafeApi.get<Producto>(`productos/${ id }`);
         return resp.data;
 
-
     };
+    
     const  deleteProduct = async(id: string) => {
 
     };
