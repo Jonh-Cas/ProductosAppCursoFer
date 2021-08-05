@@ -1,12 +1,68 @@
-import React from 'react'
-import { View, Text } from 'react-native'
+import React, { useContext, useEffect } from 'react'
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { ProductsContext } from '../context/ProductsContext'
+import { StackScreenProps } from '@react-navigation/stack';
+import { ProductsStackParams } from '../navigation/ProductsNavigation';
 
-const ProductsScreen = () => {
+interface  Props extends StackScreenProps<ProductsStackParams, 'ProductsScreen'>{};
+
+
+const ProductsScreen = ({navigation, }: Props) => {
+const {products } = useContext(ProductsContext);
+
+
+useEffect(() => {
+    navigation.setOptions({
+        headerRight: () => (
+            <TouchableOpacity
+                activeOpacity={ 0.8 }
+                style={{ marginRight: 10,} }
+                onPress={ () => navigation.navigate('ProductScreen', {})  }
+            >
+                <Text> Agregar </Text>
+            </TouchableOpacity>
+        )
+    })
+}, [])
+
+// TODO: Pull to refresh
+
     return (
-        <View>
-            <Text>Products screen</Text>
+        <View style={{ flex: 1, marginHorizontal: 5 }} >
+                <FlatList 
+                    data={products}
+                    keyExtractor={  p => p._id }
+                    renderItem={({item}) => (
+                        <TouchableOpacity
+                            activeOpacity={ 0.8 }
+                            onPress={ 
+                                () => navigation.navigate('ProductScreen',{
+                                    id: item._id,
+                                    name: item.nombre,
+                                }) }
+                        >
+                            <Text style={styles.productName} >{item.nombre} </Text>
+                        </TouchableOpacity>
+                    )}
+                    ItemSeparatorComponent={ ()  => (
+                        <View 
+                            style={styles.itemSeparator}
+                        />
+                    ) }
+                />  
         </View>
     )
 }
 
 export default ProductsScreen;
+
+const styles = StyleSheet.create({
+    productName: {
+        fontSize: 20,
+    },
+    itemSeparator: {
+        borderBottomWidth: 2,
+        marginVertical: 5,
+        borderBottomColor: 'rgba(0,0,0,0.1)'
+    }
+});
