@@ -1,8 +1,9 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TextInput, Button, ScrollView, Image } from 'react-native';
 
 import { Picker } from '@react-native-picker/picker';
 
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import { StackScreenProps } from '@react-navigation/stack';
 import { ProductsStackParams } from '../navigation/ProductsNavigation';
 import { useCategories } from '../hooks/useCategories';
@@ -19,7 +20,8 @@ const ProductScreen = ({ navigation, route }: Props) => {
     const { id = '', name = '' } = route.params;
 
     const { categories, isLoading } = useCategories();
-    const { loadProductById, addProduct, updateProduct } = useContext(ProductsContext)
+    const { loadProductById, addProduct, updateProduct, uploadImage } = useContext(ProductsContext);
+    const [tempUri, setTempUri] = useState<string>();
 
     const { _id, categoriaId, nombre, img, form, onChange, setFormValue } = useForm({
         _id: id,
@@ -61,6 +63,34 @@ const ProductScreen = ({ navigation, route }: Props) => {
             const newProduct = await addProduct( tempCategoriaId, nombre );
             onChange(newProduct._id, '_id');
         }
+    }
+
+    const takePhoto = () => {
+        launchCamera({
+            quality: 0.5,
+            mediaType: 'photo',
+        }, (resp) => {
+            if(resp.didCancel) return;
+            if( !resp.assets ) return;
+            if (!resp.assets[0].uri) return;
+            setTempUri(resp.assets[0].uri );
+            uploadImage(resp, _id)
+
+        });
+    }
+
+    const takePhotoFromGalery = () => {
+        launchImageLibrary({
+            quality: 0.5,
+            mediaType: 'photo',
+        }, (resp) => {
+            if(resp.didCancel) return;
+            if( !resp.assets ) return;
+            if (!resp.assets[0].uri) return;
+            setTempUri(resp.assets[0].uri );
+            uploadImage(resp, _id)
+
+        });
     }
 
 
@@ -114,15 +144,13 @@ const ProductScreen = ({ navigation, route }: Props) => {
                         }}>
                             <Button
                                 title='Camara'
-                                //TODO: Por hacer 
-                                onPress={() => { }}
+                                onPress={ takePhoto }
                                 color='#5856d6'
                             />
                             <View style={{ width: 10, }} />
                             <Button
                                 title='Galeria'
-                                //TODO: Por hacer 
-                                onPress={() => { }}
+                                onPress={takePhotoFromGalery}
                                 color='#5856d6'
                             />
         
@@ -134,18 +162,33 @@ const ProductScreen = ({ navigation, route }: Props) => {
 
 
                 {
-                    (img.length > 0) &&
+                    (img.length > 0 && !tempUri ) && (
                         <Image
                             source={{ uri: img }}
                             style={{
                                 marginTop: 20,
-                            width: '100%',
-                            height: 300,
+                                width: '100%',
+                                height: 300,
                              }}
                          />
+                    )
                 }
 
-                {/* TODO: Mostrar Imagen temporal */}
+                   
+                {
+                    (tempUri ) && (
+                        <Image
+                            source={{ uri: tempUri }}
+                            style={{
+                                marginTop: 20,
+                                width: '100%',
+                                height: 300,
+                             }}
+                         />
+                    )
+                }
+
+
 
             </ScrollView>
         </View>
